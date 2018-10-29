@@ -6,11 +6,12 @@ const User = require('../models/user');
 const router = express.Router(); 
 
 router.post('/', (req, res, next) => { 
-  const {firstName, lastName, userName, password} = req.body; 
-  const newUser = {firstName, lastName, userName, password}; 
+  const {fullname, username, password} = req.body; 
+  const newUser = {fullname, username, password}; 
+  console.log('username:', username);
   
   User
-    .create({newUser})
+    .create(newUser)
     .then(result => { 
       res
         .status(201)
