@@ -18,14 +18,19 @@ router.post('/', (req, res, next) => {
     return next(err);
   }
 
-  Object.keys(requiredFields).forEach(field => { 
-    if (typeof(newUser[field]) !== String ) { 
-      const err = new Error(`${field} is not of type String`); 
-      err.status = 422; 
-      return next(err); 
-    }
+  const stringFields = ['username', 'password', 'fullname'];
+  const nonStringField = stringFields.find(
+    field => field in req.body && typeof req.body[field] !== 'string'
+  );
 
-  }); 
+  if (nonStringField) {
+    return res.status(422).json({
+      code: 422,
+      reason: 'ValidationError',
+      message: 'Incorrect field type: expected string',
+      location: nonStringField
+    });
+  }
 
   const sizedFields = {
     username: {
