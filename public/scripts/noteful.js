@@ -397,10 +397,10 @@ const noteful = (function () {
 
       api.create('/api/login', loginUser)
         .then(response => {
-          store.currentUser = response;
+          store.authToken = response.authToken; // <<== add this
           store.authorized = true;
           loginForm[0].reset();
-
+    
           return Promise.all([
             api.search('/api/notes'),
             api.search('/api/folders'),

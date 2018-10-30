@@ -1,23 +1,30 @@
 'use strict';
 
+//NPM LIBRARIES
 const express = require('express');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
 const passport = require('passport');
 
+//CONFIG
 const { PORT, MONGODB_URI } = require('./config');
 
+//ROUTES
 const notesRouter = require('./routes/notes');
 const foldersRouter = require('./routes/folders');
 const tagsRouter = require('./routes/tags');
 const usersRouter = require('./routes/users'); 
 const authRouter = require('./routes/auth');
-// Create an Express application
 
+//STRATEGIES
 const localStrategy = require('./passport/local');
+const jwtStrategy = require('./passport/jwt');
+
+//AN EXPRESS APP
 const app = express();
 
 passport.use(localStrategy); 
+passport.use(jwtStrategy); 
 
 // Log all requests. Skip logging during
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'common', {
