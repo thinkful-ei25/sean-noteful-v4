@@ -5,11 +5,51 @@ const mongoose = require('mongoose');
 const passport = require('passport'); 
 
 const Note = require('../models/note');
+const User = require('../models/user'); 
+const Folder = require('../models/folder'); 
+const Tag = require('../models/tag'); 
 
 const router = express.Router();
 
 router.use('/', passport.authenticate('jwt', { session: false, failWithError: true }));
 
+function validateFolderId(userId, folderId){
+  return Folder
+    .findOne({ _id : folderId, userId})
+    .then(result => { 
+      if (!result){ 
+        const err = new Error('This `folder` does not belong to the current `user`'); 
+        err.status = 400; 
+        return Promise.reject(err); 
+      }
+      return Promise.resolve(); 
+    }); 
+}
+
+function validateTagId(userId, tags) { 
+  return Tag
+    .find({ _id : {$in : tags}, userId})
+    .then(results => { 
+
+      if (results.length !== tags.length){
+        let errorString = 'The `tag(s)` with these `id(s)` do not belong to the current user: '; 
+
+        const convertedResultsToString = results.map(result => result._id.toString() );
+        const notInResults = (tag) =>  !convertedResultsToString.includes(tag); 
+        const filteredTags = tags.filter(notInResults); 
+
+        filteredTags.forEach(nonMatchingTag => { 
+          errorString = errorString.concat(nonMatchingTag + ': '); 
+        }); 
+      
+        const err = new Error(errorString); 
+        err.status = 400; 
+        return Promise.reject(err); 
+      }
+      
+      return Promise.resolve(); 
+    }); 
+}
 /* ========== GET/READ ALL ITEMS ========== */
 router.get('/', (req, res, next) => {
   const { searchTerm, folderId, tagId } = req.query;
@@ -79,13 +119,16 @@ router.post('/', (req, res, next) => {
     return next(err);
   }
 
-  if (folderId && !mongoose.Types.ObjectId.isValid(folderId)) {
-    const err = new Error('The `folderId` is not valid');
-    err.status = 400;
-    return next(err);
-  }
-
+  //DO TAGS EXIST?
   if (tags) {
+    //ARE TAGS AN ARRAY?
+    if (!Array.isArray(tags)){ 
+      console.log('HIIIII');
+      const err = new Error('`tags` are not an array'); 
+      err.status = 400; 
+      return next(err); 
+    }
+    //DOES EACH TAG HAVE A VALID MONGOOSE ID?
     const badIds = tags.filter((tag) => !mongoose.Types.ObjectId.isValid(tag));
     if (badIds.length) {
       const err = new Error('The `tags` array contains an invalid `id`');
@@ -93,13 +136,25 @@ router.post('/', (req, res, next) => {
       return next(err);
     }
   }
+  //DOES THE FOLDER HAVE A VALID MONGOOSE ID?
+  if (!mongoose.Types.ObjectId.isValid(folderId)) {
+    const err = new Error('The `folderId` is not valid');
+    err.status = 400;
+    return Promise.reject(err); 
+  }
 
   const newNote = { title, content, folderId, tags, userId };
   if (newNote.folderId === '') {
     delete newNote.folderId;
   }
 
-  Note.create(newNote)
+  Promise.all([
+    validateFolderId(userId, folderId), 
+    validateTagId(userId, tags)
+  ])
+    .then(() => { 
+      return Note.create(newNote); 
+    })
     .then(result => {
       res.location(`${req.originalUrl}/${result.id}`).status(201).json(result);
     })
@@ -163,8 +218,11 @@ router.put('/:id', (req, res, next) => {
     delete toUpdate.folderId;
     toUpdate.$unset = {folderId : 1};
   }
-
-  Note.findOneAndUpdate(filter, toUpdate, { new : true})
+  Promise.all([validateFolderId, validateTagId])
+    .then(() => { 
+      return Note
+        .findOneAndUpdate(filter, toUpdate, { new : true}); 
+    })
     .then(result => {
       if (result) {
         res.json(result);
