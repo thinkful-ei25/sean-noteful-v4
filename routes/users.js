@@ -32,6 +32,17 @@ router.post('/', (req, res, next) => {
     });
   }
 
+  const explicityTrimmedFields = ['username', 'password'];
+  const nonTrimmedField = explicityTrimmedFields.find(
+    field => req.body[field].trim() !== req.body[field]
+  );
+
+  if (nonTrimmedField) {
+    const err = new Error(`Field: '${nonTrimmedField}' cannot start or end with whitespace`);
+    err.status = 422;
+    return next(err);
+  }
+
   const sizedFields = {
     username: {
       min: 1

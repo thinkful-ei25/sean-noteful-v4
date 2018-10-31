@@ -107,7 +107,15 @@ describe.only('Noteful API - Users', function () {
             expect(res.body.location).to.eql('password'); 
           }); 
       });
-      it('Should reject users with non-trimmed username');
+
+      it('Should reject users with non-trimmed username', function () { 
+        const testUser = { username : '  user ', fullname, password}; 
+        return chai.request(app).post('/api/users').send(testUser)
+          .then(res => { 
+            expect(res).to.have.status(422); 
+            expect(res.body.message).to.eql('Field: \'username\' cannot start or end with whitespace'); 
+          });   
+      });
       it('Should reject users with non-trimmed password');
       it('Should reject users with empty username');
       it('Should reject users with password less than 8 characters');
