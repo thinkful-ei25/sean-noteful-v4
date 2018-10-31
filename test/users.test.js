@@ -89,7 +89,14 @@ describe.only('Noteful API - Users', function () {
           }); 
       });
 
-      it('Should reject users with non-string username');
+      it('Should reject users with non-string username', function () { 
+        const testUser = { username : 22, fullname, password }; 
+        return chai.request(app).post('/api/users').send(testUser)
+          .then(res => { 
+            expect(res).to.have.status(422); 
+            expect(res.body.message).to.eql('Incorrect field type: expected string'); 
+          }); 
+      });
       it('Should reject users with non-string password');
       it('Should reject users with non-trimmed username');
       it('Should reject users with non-trimmed password');
