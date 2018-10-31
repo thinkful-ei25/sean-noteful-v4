@@ -30,7 +30,6 @@ function validateTagId(userId, tags) {
   return Tag
     .find({ _id : {$in : tags}, userId})
     .then(results => { 
-
       if (results.length !== tags.length){
         let errorString = 'The `tag(s)` with these `id(s)` do not belong to the current user: '; 
 
