@@ -112,6 +112,7 @@ router.post('/', (req, res, next) => {
 router.put('/:id', (req, res, next) => {
   const { id } = req.params;
   const { id : userId} = req.user; 
+  const { folderId } = req.body; 
 
   const filter = { _id : id, userId }; 
 
@@ -126,9 +127,15 @@ router.put('/:id', (req, res, next) => {
 
   /***** Never trust users - validate input *****/
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    const err = new Error('The `id` is not valid');
+    const err = new Error('The `note id` is not valid');
     err.status = 400;
     return next(err);
+  }
+
+  if(!mongoose.Types.ObjectId.isValid(folderId)) { 
+    const err = new Error('The `folder id` is not valid'); 
+    err.status = 400; 
+    return next(err); 
   }
 
   if (toUpdate.title === '') {
