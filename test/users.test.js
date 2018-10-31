@@ -80,7 +80,15 @@ describe.only('Noteful API - Users', function () {
       /**
        * COMPLETE ALL THE FOLLOWING TESTS
        */
-      it('Should reject users with missing password');
+      it('Should reject users with missing password', function () { 
+        const testUser = { username, fullname}; 
+        return chai.request(app).post('/api/users').send(testUser)
+          .then(res => { 
+            expect(res).to.have.status(422); 
+            expect(res.body.message).to.eql('Missing \'password\' in request body'); 
+          }); 
+      });
+
       it('Should reject users with non-string username');
       it('Should reject users with non-string password');
       it('Should reject users with non-trimmed username');
