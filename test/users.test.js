@@ -13,31 +13,32 @@ const expect = chai.expect;
 
 chai.use(chaiHttp);
 
-describe.only('Noteful API - Users', function () {
+describe.only('Noteful API - Users', () =>{
   const username = 'exampleUser';
   const password = 'examplePass';
   const fullname = 'Example User';
 
-  before(function () {
-    return mongoose.connect(TEST_MONGODB_URI)
+  before(() => {
+    return mongoose
+      .connect(TEST_MONGODB_URI)
       .then(() => mongoose.connection.db.dropDatabase());
   });
 
-  beforeEach(function () {
+  beforeEach(() => {
     return User.createIndexes();
   });
 
-  afterEach(function () {
+  afterEach(() => {
     return mongoose.connection.db.dropDatabase();
   });
 
-  after(function () {
+  after(() => {
     return mongoose.disconnect();
   });
-  
-  describe('/api/users', function () {
-    describe('POST', function () {
-      it('Should create a new user', function () {
+
+  describe('/api/users', () => {
+    describe('POST', () => {
+      it('Should create a new user', () => {
         const testUser = { username, password, fullname };
 
         let res;
@@ -68,60 +69,160 @@ describe.only('Noteful API - Users', function () {
           });
       });
 
-      it('Should reject users with missing username', function () {
+      it('Should reject users with missing username', function() {
         const testUser = { password, fullname };
-        return chai.request(app).post('/api/users').send(testUser)
+        return chai
+          .request(app)
+          .post('/api/users')
+          .send(testUser)
           .then(res => {
             expect(res).to.have.status(422);
-            expect(res.body.message).to.eql('Missing \'username\' in request body'); 
+            expect(res.body.message).to.eql(
+              'Missing \'username\' in request body'
+            );
           });
       });
 
       /**
        * COMPLETE ALL THE FOLLOWING TESTS
        */
-      it('Should reject users with missing password', function () { 
-        const testUser = { username, fullname}; 
-        return chai.request(app).post('/api/users').send(testUser)
+      it('Should reject users with missing password', () => {
+        const testUser = { username, fullname };
+        return chai
+          .request(app)
+          .post('/api/users')
+          .send(testUser)
+          .then(res => {
+            expect(res).to.have.status(422);
+            expect(res.body.message).to.eql(
+              'Missing \'password\' in request body'
+            );
+          });
+      });
+
+      it('Should reject users with non-string username', () => {
+        const testUser = { username: 22, fullname, password };
+        return chai
+          .request(app)
+          .post('/api/users')
+          .send(testUser)
+          .then(res => {
+            expect(res).to.have.status(422);
+            expect(res.body.message).to.eql(
+              'Incorrect field type: expected string'
+            );
+            expect(res.body.location).to.eql('username');
+          });
+      });
+
+      it('Should reject users with non-string password', () => {
+        const testUser = { username, fullname, password: 22 };
+        return chai
+          .request(app)
+          .post('/api/users')
+          .send(testUser)
+          .then(res => {
+            expect(res).to.have.status(422);
+            expect(res.body.message).to.eql(
+              'Incorrect field type: expected string'
+            );
+            expect(res.body.location).to.eql('password');
+          });
+      });
+
+      it('Should reject users with non-trimmed username', () => {
+        const testUser = { username: '  user ', fullname, password };
+        return chai
+          .request(app)
+          .post('/api/users')
+          .send(testUser)
+          .then(res => {
+            expect(res).to.have.status(422);
+            expect(res.body.message).to.eql(
+              'Field: \'username\' cannot start or end with whitespace'
+            );
+          });
+      });
+
+      it('Should reject users with non-trimmed password', () => {
+        const testUser = { username, fullname, password: ' password ' };
+        return chai
+          .request(app)
+          .post('/api/users')
+          .send(testUser)
+          .then(res => {
+            expect(res).to.have.status(422);
+            expect(res.body.message).to.eql(
+              'Field: \'password\' cannot start or end with whitespace'
+            );
+          });
+      });
+
+      it('Should reject users with empty username', () => { 
+        const testUser = { username : '', fullname, password}; 
+        return chai
+          .request(app)
+          .post('/api/users')
+          .send(testUser)
           .then(res => { 
             expect(res).to.have.status(422); 
-            expect(res.body.message).to.eql('Missing \'password\' in request body'); 
+            expect(res.body.message).eql('Must be at least 1 characters long'); 
+            expect(res.body.location).eql('username'); 
           }); 
       });
 
-      it('Should reject users with non-string username', function () { 
-        const testUser = { username : 22, fullname, password }; 
-        return chai.request(app).post('/api/users').send(testUser)
+      it('Should reject users with password less than 8 characters', () => { 
+        const testUser = { username, fullname, password: 'nopass' }; 
+        return chai 
+          .request(app)
+          .post('/api/users')
+          .send(testUser)
           .then(res => { 
             expect(res).to.have.status(422); 
-            expect(res.body.message).to.eql('Incorrect field type: expected string'); 
-            expect(res.body.location).to.eql('username'); 
-          }); 
-      });
-      it('Should reject users with non-string password', function () { 
-        const testUser = { username, fullname, password: 22}; 
-        return chai.request(app).post('/api/users').send(testUser)
-          .then(res => { 
-            expect(res).to.have.status(422); 
-            expect(res.body.message).to.eql('Incorrect field type: expected string'); 
-            expect(res.body.location).to.eql('password'); 
+            expect(res.body.message).eql('Must be at least 8 characters long'); 
+            expect(res.body.location).eql('password'); 
           }); 
       });
 
-      it('Should reject users with non-trimmed username', function () { 
-        const testUser = { username : '  user ', fullname, password}; 
-        return chai.request(app).post('/api/users').send(testUser)
+      it('Should reject users with password greater than 72 characters', () => { 
+        const testUser = { username, fullname, 
+          password:
+           'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}; 
+        return chai
+          .request(app)
+          .post('/api/users')
+          .send(testUser)
           .then(res => { 
             expect(res).to.have.status(422); 
-            expect(res.body.message).to.eql('Field: \'username\' cannot start or end with whitespace'); 
-          });   
+            expect(res.body.message).eql('Must be at most 72 characters long'); 
+            expect(res.body.location).eql('password'); 
+          }); 
       });
-      it('Should reject users with non-trimmed password');
-      it('Should reject users with empty username');
-      it('Should reject users with password less than 8 characters');
-      it('Should reject users with password greater than 72 characters');
-      it('Should reject users with duplicate username');
-      it('Should trim fullname');
+
+      // it('Should reject users with duplicate username', () => { 
+      //   const testUser = { username : 'signalflowsean', fullname, password}; 
+      //   return chai
+      //     .request(app)
+      //     .post('/api/users')
+      //     .send(testUser)
+      //     .then(res => { 
+      //       expect(res).to.have.status(400); 
+      //       expect(res.body.message).eql('The username already exists'); 
+      //     });
+      // });
+
+      it('Should trim fullname', ()=>{ 
+        const testUser = { username, fullname: ' Joe Shmoe ', password}; 
+        return chai
+          .request(app)
+          .post('/api/users')
+          .send(testUser)
+          .then(res => { 
+            expect(res).to.have.status(201); 
+            expect(res.body.fullname).eql('Joe Shmoe'); 
+          });
+      });
+      
     });
   });
 });
