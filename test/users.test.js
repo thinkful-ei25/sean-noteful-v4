@@ -13,7 +13,7 @@ const expect = chai.expect;
 
 chai.use(chaiHttp);
 
-describe.only('Noteful API - Users', () =>{
+describe.only('Noteful API - Users', () => {
   const username = 'exampleUser';
   const password = 'examplePass';
   const fullname = 'Example User';
@@ -158,71 +158,75 @@ describe.only('Noteful API - Users', () =>{
           });
       });
 
-      it('Should reject users with empty username', () => { 
-        const testUser = { username : '', fullname, password}; 
+      it('Should reject users with empty username', () => {
+        const testUser = { username: '', fullname, password };
         return chai
           .request(app)
           .post('/api/users')
           .send(testUser)
-          .then(res => { 
-            expect(res).to.have.status(422); 
-            expect(res.body.message).eql('Must be at least 1 characters long'); 
-            expect(res.body.location).eql('username'); 
-          }); 
-      });
-
-      it('Should reject users with password less than 8 characters', () => { 
-        const testUser = { username, fullname, password: 'nopass' }; 
-        return chai 
-          .request(app)
-          .post('/api/users')
-          .send(testUser)
-          .then(res => { 
-            expect(res).to.have.status(422); 
-            expect(res.body.message).eql('Must be at least 8 characters long'); 
-            expect(res.body.location).eql('password'); 
-          }); 
-      });
-
-      it('Should reject users with password greater than 72 characters', () => { 
-        const testUser = { username, fullname, 
-          password:
-           'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}; 
-        return chai
-          .request(app)
-          .post('/api/users')
-          .send(testUser)
-          .then(res => { 
-            expect(res).to.have.status(422); 
-            expect(res.body.message).eql('Must be at most 72 characters long'); 
-            expect(res.body.location).eql('password'); 
-          }); 
-      });
-
-      // it('Should reject users with duplicate username', () => { 
-      //   const testUser = { username : 'signalflowsean', fullname, password}; 
-      //   return chai
-      //     .request(app)
-      //     .post('/api/users')
-      //     .send(testUser)
-      //     .then(res => { 
-      //       expect(res).to.have.status(400); 
-      //       expect(res.body.message).eql('The username already exists'); 
-      //     });
-      // });
-
-      it('Should trim fullname', ()=>{ 
-        const testUser = { username, fullname: ' Joe Shmoe ', password}; 
-        return chai
-          .request(app)
-          .post('/api/users')
-          .send(testUser)
-          .then(res => { 
-            expect(res).to.have.status(201); 
-            expect(res.body.fullname).eql('Joe Shmoe'); 
+          .then(res => {
+            expect(res).to.have.status(422);
+            expect(res.body.message).eql('Must be at least 1 characters long');
+            expect(res.body.location).eql('username');
           });
       });
-      
+
+      it('Should reject users with password less than 8 characters', () => {
+        const testUser = { username, fullname, password: 'nopass' };
+        return chai
+          .request(app)
+          .post('/api/users')
+          .send(testUser)
+          .then(res => {
+            expect(res).to.have.status(422);
+            expect(res.body.message).eql('Must be at least 8 characters long');
+            expect(res.body.location).eql('password');
+          });
+      });
+
+      it('Should reject users with password greater than 72 characters', () => {
+        const testUser = {
+          username,
+          fullname,
+          password:
+            'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+        };
+        return chai
+          .request(app)
+          .post('/api/users')
+          .send(testUser)
+          .then(res => {
+            expect(res).to.have.status(422);
+            expect(res.body.message).eql('Must be at most 72 characters long');
+            expect(res.body.location).eql('password');
+          });
+      });
+
+      it('Should reject users with duplicate username', () => {
+        const testUser = { username, fullname, password };
+        return User.create(testUser)
+          .then(() => {
+            return chai
+              .request(app)
+              .post('/api/users')
+              .send(testUser); 
+          })
+          .then(res => {
+            expect(res.body.message).eql('The username already exists');
+          });
+      });
+
+      it('Should trim fullname', () => {
+        const testUser = { username, fullname: ' Joe Shmoe ', password };
+        return chai
+          .request(app)
+          .post('/api/users')
+          .send(testUser)
+          .then(res => {
+            expect(res).to.have.status(201);
+            expect(res.body.fullname).eql('Joe Shmoe');
+          });
+      });
     });
   });
 });
