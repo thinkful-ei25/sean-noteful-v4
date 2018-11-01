@@ -27,9 +27,9 @@ describe.only('Auth endpoints', function () {
       .then(() => mongoose.connection.db.dropDatabase());
   });
 
-  beforeEach(() => {
-    return User.createIndexes();
-  });
+  // beforeEach(() => {
+  //   return User.createIndexes();
+  // });
  
   beforeEach(() => { 
     return User.hashPassword(password).then(password =>
@@ -112,10 +112,99 @@ describe.only('Auth endpoints', function () {
   });
   
   describe('/api/auth/refresh', function () {
-    it('Should reject requests with no credentials'); 
-    it('Should reject requests with an invalid token'); 
-    it('Should reject requests with an expired token'); 
-    it('Should return a valid auth token with a newer expiry date'); 
-  }); 
+    it('Should reject requests with no credentials', () => { 
+      return chai
+        .request(app)
+        .post('/login/refresh')
+        .then((res) => { 
+          expect(res).to.have.status(404); 
+          expect(res.body.message).to.eql('Not Found'); 
+        }); 
+    }); 
+    it('Should reject requests with an invalid token', () => { 
+      const token = jwt.sign(
+        {
+          user : { 
+            username
+          }
+        },
+        'wrongSecret',
+        {
+          algorithm: 'HS256',
+          expiresIn: '7d'
+        }
+      );
 
+      return chai
+        .request(app)
+        .post('/api/login/refresh')
+        .set('Authorization', `Bearer ${token}`)
+        .then((res) => { 
+          expect(res).to.have.status(401);
+          expect(res.body.name).to.eql('AuthenticationError'); 
+          expect(res.body.message).to.eql('Unauthorized'); 
+        }); 
+    }); 
+
+    it('Should reject requests with an expired token', () => { 
+      const token = jwt.sign ( 
+        {
+    
+          username,
+          fullname
+    
+        },
+        JWT_SECRET, 
+        { 
+          algorithm: 'HS256',
+          subject: username,
+          expiresIn: Math.floor(Date.now() / 1000) - 10 // Expired ten seconds ago
+        }
+      ); 
+
+      return chai
+        .request(app)
+        .post('/api/login/refresh')
+        .set('Authorization', `Bearer ${token}`)
+        .then((res) => { 
+          expect(res).to.have.status(401);
+          expect(res.body.name).to.eql('AuthenticationError'); 
+          expect(res.body.message).to.eql('Unauthorized'); 
+        }); 
+      
+    }); 
+
+    it('Should return a valid auth token with a newer expiry date', () => { 
+      return chai
+        .request(app)
+        .post('/api/login')
+        .send({username, password})
+        .then(res => { 
+          expect(res).to.have.status(200); 
+          expect(res.body).to.be.an('object');
+          expect(res.body.authToken).to.be.a('string');  
+          const payload = jwt.verify(res.body.authToken, JWT_SECRET); 
+          expect(payload.user).to.not.have.property('password'); 
+          return res;
+        }).then((res) => { 
+          return chai
+            .request(app)
+            .post('/api/login/refresh')
+            .set('Authorization', `Bearer ${res.body.authToken}`)
+            .then(res => { 
+              expect(res).to.have.status(200); 
+              expect(res.body).to.be.an('object');
+              expect(res.body.authToken).to.be.a('string');
+              const payload = jwt.verify(res.body.authToken, JWT_SECRET, {
+                algorithm: ['HS256']
+              });
+              expect(payload.user).to.include({
+                username,
+                fullname, 
+              });
+              expect(payload.user).to.have.keys('fullname', 'username', 'id'); 
+            }); 
+        }); 
+    }); 
+  }); 
 });

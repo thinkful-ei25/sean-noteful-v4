@@ -21,7 +21,9 @@ describe.only('Noteful API - Users', () => {
   before(() => {
     return mongoose
       .connect(TEST_MONGODB_URI)
-      .then(() => mongoose.connection.db.dropDatabase());
+      .then(() =>  
+        mongoose.connection.db.dropDatabase() 
+      ); 
   });
 
   beforeEach(() => {
