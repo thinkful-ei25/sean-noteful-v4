@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose'); 
 
 //const { app, runServer, closeServer } = require('../server'); 
-const { TEST_MONGODB_URI } = require('../config');
+const { JWT_SECRET, TEST_MONGODB_URI } = require('../config');
 
 const User = require('../models/user');
 
@@ -19,8 +19,7 @@ describe.only('Auth endpoints', function () {
 
   const username = 'testUser'; 
   const password = 'testPass'; 
-  const firstName = 'Test';  
-  const lastName = 'TestTest'; 
+  const fullname = 'Test Test'; 
 
   before(() => {
     return mongoose
@@ -37,8 +36,7 @@ describe.only('Auth endpoints', function () {
       User.create({
         username,
         password,
-        firstName,
-        lastName
+        fullname
       })
     );
   }); 
@@ -58,10 +56,66 @@ describe.only('Auth endpoints', function () {
         .post('/api/login')
         //NOT SENDING ANYTHIN{G TO THE POST REQUEST
         .then((res) => {
+          expect(res.body.name).to.eql('AuthenticationError'); 
           expect(res.body.message).to.eql('Bad Request'); 
           expect(res).to.have.status(400);  
         });
-    });  
+    });
+    
+    it('Should reject requests with incorrect usernames', () => { 
+      return chai
+        .request(app)
+        .post('/api/login')
+        .send({ username : 'fakename', fullname, password})
+        .then((res) => {
+          expect(res.body.name).to.eql('AuthenticationError'); 
+          expect(res.body.message).to.eql('Unauthorized'); 
+          expect(res).to.have.status(401);  
+        });
+    }); 
+
+    it('Should reject requests with incorrect passwords', () => { 
+      return chai
+        .request(app)
+        .post('/api/login')
+        .send({ username, fullname, password : 'fakepassword'})
+        .then((res) => {
+          expect(res.body.name).to.eql('AuthenticationError'); 
+          expect(res.body.message).to.eql('Unauthorized'); 
+          expect(res).to.have.status(401);  
+        });
+    });
+
+    it('Should return a valid auth token', () => { 
+      return chai
+        .request(app)
+        .post('/api/login')
+        .send({ username, fullname, password})
+        .then((res) => { 
+          expect(res).to.have.status(200); 
+          expect(res).to.be.an('object'); 
+          expect(res.body).to.have.key('authToken'); 
+          expect(res.body.authToken).to.be.a('string'); 
+          const payload = jwt.verify(res.body.authToken, JWT_SECRET, { 
+            algorithm: ['HS256']
+          }); 
+          expect(payload.user).to.include({ 
+            username, 
+            fullname
+          });
+          expect(payload.user).to.have.key(
+            'id', 
+            'fullname', 
+            'username');  
+        }); 
+    }); 
+  });
+  
+  describe('/api/auth/refresh', function () {
+    it('Should reject requests with no credentials'); 
+    it('Should reject requests with an invalid token'); 
+    it('Should reject requests with an expired token'); 
+    it('Should return a valid auth token with a newer expiry date'); 
   }); 
 
 });
