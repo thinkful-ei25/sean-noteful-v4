@@ -58,7 +58,8 @@ app.use((err, req, res, next) => {
     res.status(err.status).json(errBody);
 
   } else {
-    console.log(err); 
+    //Uncomment line below to see stack trace
+    //console.log(err); 
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });

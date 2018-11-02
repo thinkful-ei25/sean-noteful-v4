@@ -13,7 +13,7 @@ const expect = chai.expect;
 
 chai.use(chaiHttp);
 
-describe.only('Noteful API - Users', () => {
+describe('Noteful API - Users', () => {
   const username = 'exampleUser';
   const password = 'examplePass';
   const fullname = 'Example User';

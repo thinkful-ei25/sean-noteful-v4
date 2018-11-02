@@ -720,7 +720,5 @@ describe('Noteful API - Notes', function () {
           expect(res.body.message).to.equal('Internal Server Error');
         });
     });
-
   });
-
 });
