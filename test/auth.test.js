@@ -145,7 +145,7 @@ describe('Auth endpoints', function() {
         });
     });
 
-    it('Should renew token with requests that have an expired token', () => {
+    it('Should reject an expired token', () => {
       const token = jwt.sign(
         {
           user: {

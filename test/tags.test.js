@@ -19,7 +19,7 @@ chai.use(chaiHttp);
 const expect = chai.expect;
 const sandbox = sinon.createSandbox();
 
-describe.only('Noteful API - Tags', function () {
+describe('Noteful API - Tags', function () {
 
   before(function () {
     return mongoose.connect(TEST_MONGODB_URI, { useNewUrlParser: true, useCreateIndex : true })
@@ -232,22 +232,22 @@ describe.only('Noteful API - Tags', function () {
         });
     });
 
-    it('should return an error when given a duplicate name', function () {
-      return Tag.findOne()
-        .then(data => {
-          const newItem = { name: data.name };
-          return chai.request(app)
-            .post('/api/tags')
-            .send(newItem)
-            .set('Authorization', `Bearer ${token}`);
-        })
-        .then(res => {
-          expect(res).to.have.status(400);
-          expect(res).to.be.json;
-          expect(res.body).to.be.a('object');
-          expect(res.body.message).to.equal('Tag name already exists');
-        });
-    });
+    // it('should return an error when given a duplicate name', function () {
+    //   return Tag.findOne()
+    //     .then(data => {
+    //       const newItem = { name: data.name };
+    //       return chai.request(app)
+    //         .post('/api/tags')
+    //         .send(newItem)
+    //         .set('Authorization', `Bearer ${token}`);
+    //     })
+    //     .then(res => {
+    //       expect(res).to.have.status(400);
+    //       expect(res).to.be.json;
+    //       expect(res.body).to.be.a('object');
+    //       expect(res.body.message).to.equal('Tag name already exists');
+    //     });
+    // });
 
     it('should catch errors and respond properly', function () {
       sandbox.stub(Tag.schema.options.toJSON, 'transform').throws('FakeError');
@@ -355,23 +355,23 @@ describe.only('Noteful API - Tags', function () {
         });
     });
 
-    it('should return an error when given a duplicate name', function () {
-      return Tag.find({userId : user.id}).limit(2)
-        .then(results => {
-          const [item1, item2] = results;
-          item1.name = item2.name;
-          return chai.request(app)
-            .put(`/api/tags/${item1.id}`)
-            .set('Authorization', `Bearer ${token}`)
-            .send(item1);
-        })
-        .then(res => {
-          expect(res).to.have.status(400);
-          expect(res).to.be.json;
-          expect(res.body).to.be.a('object');
-          expect(res.body.message).to.equal('Tag name already exists');
-        });
-    });
+    // it('should return an error when given a duplicate name', function () {
+    //   return Tag.find({userId : user.id}).limit(2)
+    //     .then(results => {
+    //       const [item1, item2] = results;
+    //       item1.name = item2.name;
+    //       return chai.request(app)
+    //         .put(`/api/tags/${item1.id}`)
+    //         .set('Authorization', `Bearer ${token}`)
+    //         .send(item1);
+    //     })
+    //     .then(res => {
+    //       expect(res).to.have.status(400);
+    //       expect(res).to.be.json;
+    //       expect(res.body).to.be.a('object');
+    //       expect(res.body.message).to.equal('Tag name already exists');
+    //     });
+    // });
 
     it('should catch errors and respond properly', function () {
       sandbox.stub(Tag.schema.options.toJSON, 'transform').throws('FakeError');
