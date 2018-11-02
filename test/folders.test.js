@@ -19,7 +19,7 @@ chai.use(chaiHttp);
 const expect = chai.expect;
 const sandbox = sinon.createSandbox();
 
-describe.only('Noteful API - Folders', function () {
+describe('Noteful API - Folders', function () {
 
   before(() => {
     return mongoose
@@ -32,9 +32,6 @@ describe.only('Noteful API - Folders', function () {
 
   beforeEach(function () {
     return Promise.all([
-      //User.createIndexes(), 
-      //Folder.createIndexes(), 
-      //Note.createIndexes(), 
       User.insertMany(users), 
       Folder.insertMany(folders), 
       Note.insertMany(notes),  
